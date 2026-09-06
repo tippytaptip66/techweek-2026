@@ -46,6 +46,7 @@ function Modal({ onClose }) {
       <div className="modal">
         <h2>Register for Tech Week</h2>
         <p>Fill out the form to secure your spot in this week of innovation, competition, and discovery.</p>
+        <p>Click "Reserve your seat" Below.</p>
         <button onClick={onClose} className="close-btn">Close</button>
       </div>
     </div>
