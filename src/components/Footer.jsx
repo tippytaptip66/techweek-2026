@@ -1,7 +1,7 @@
 export default function Footer() {
   return (
     <footer className="footer">
-      <div className="wordmark">By Bacoro</div>
+      <div className="wordmark">next move?</div>
       <p className="copyright">College of Computer Studies · St. Timothy University</p>
       <div className="divider" />
       <div className="socials">
