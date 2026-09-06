@@ -5,9 +5,9 @@ const SCHEDULE = [
 ]
 
 const PHONE_CARDS = [
-  { t: 'Hackathon Finals', s: 'Today · 6:00 PM', color: 'var(--accent)' },
-  { t: 'Robotics Demo', s: 'Tomorrow · 2:00 PM', color: 'var(--accent2)' },
-  { t: 'Awards Night', s: 'Fri · 7:00 PM', color: 'var(--pink)' },
+  { t: 'Hackathon Finals', s: '6:00 PM', color: 'var(--accent)' },
+  { t: 'Robotics Demo', s: '2:00 PM', color: 'var(--accent2)' },
+  { t: 'Awards Night', s: '7:00 PM', color: 'var(--pink)' },
 ]
 
 const MORE_ITEMS = [
