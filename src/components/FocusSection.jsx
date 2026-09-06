@@ -1,5 +1,4 @@
-
-const BG_VIDEO = '/videos/techweek-bg.mp4'
+const BG_VIDEO = `${import.meta.env.BASE_URL}videos/techweek-bg.mp4`
 
 export default function FocusSection() {
   return (
