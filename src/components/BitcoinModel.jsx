@@ -7,7 +7,7 @@ const SPIN_SPEED = 0.2 // radians per second
 export default function BitcoinModel() {
   const iframeRef = useRef(null)
   const apiRef = useRef(null)
-  const tweenRef = useRef(null) // the actual running tween, so we can kill *this one*
+  const tweenRef = useRef(null)
   const [status, setStatus] = useState('loading')
 
   useEffect(() => {
@@ -33,17 +33,17 @@ export default function BitcoinModel() {
         ui_fullscreen: 0,
         ui_annotations: 0,
         ui_help: 0,
-        ui_hint: 0,
-        scrollwheel: 0, // important: without this, scrolling the page while
-                         // hovering the model zooms the camera instead
+        ui_hint: 0, // suppresses Sketchfab's "click & drag to rotate" hint icon
+        scrollwheel: 0,
         success: (api) => {
           if (cancelled) return
           apiRef.current = api
           api.start()
           api.addEventListener('viewerready', () => {
             if (cancelled) return
-            console.info('[BitcoinModel] Ready — hover to spin.')
+            console.info('[BitcoinModel] Ready — spinning continuously.')
             setStatus('ready')
+            startSpin(api)
           })
         },
         error: () => {
@@ -67,59 +67,45 @@ export default function BitcoinModel() {
       script.addEventListener('load', boot)
     }
 
+    function startSpin(api) {
+      api.getCameraLookAt((err, camera) => {
+        if (err || !camera || cancelled) return
+        const { position, target } = camera
+        const dx = position[0] - target[0]
+        const dz = position[2] - target[2]
+
+        tweenRef.current = gsap.to(
+          { angle: 0 },
+          {
+            angle: Math.PI * 2,
+            duration: (Math.PI * 2) / SPIN_SPEED,
+            repeat: -1,
+            ease: 'none',
+            onUpdate: function () {
+              const angle = this.targets()[0].angle
+              const cos = Math.cos(angle)
+              const sin = Math.sin(angle)
+              const newX = dx * cos - dz * sin
+              const newZ = dx * sin + dz * cos
+              api.setCameraLookAt(
+                [target[0] + newX, position[1], target[2] + newZ],
+                target,
+                0
+              )
+            },
+          }
+        )
+      })
+    }
+
     return () => {
       cancelled = true
       tweenRef.current?.kill()
     }
   }, [])
 
-  function activate() {
-    const api = apiRef.current
-  
-    if (!api || tweenRef.current) return
-
-    api.getCameraLookAt((err, camera) => {
-      if (err || !camera) return
-      const { position, target } = camera
-      const dx = position[0] - target[0]
-      const dz = position[2] - target[2]
-
-      tweenRef.current = gsap.to(
-        { angle: 0 },
-        {
-          angle: Math.PI * 2,
-          duration: (Math.PI * 2) / SPIN_SPEED,
-          repeat: -1,
-          ease: 'none',
-          onUpdate: function () {
-            const angle = this.targets()[0].angle
-            const cos = Math.cos(angle)
-            const sin = Math.sin(angle)
-            const newX = dx * cos - dz * sin
-            const newZ = dx * sin + dz * cos
-            api.setCameraLookAt(
-              [target[0] + newX, position[1], target[2] + newZ],
-              target,
-              0
-            )
-          },
-        }
-      )
-    })
-  }
-
-  function deactivate() {
-    tweenRef.current?.kill()
-    tweenRef.current = null
-  }
-
   return (
-    <div
-      className="bitcoin-model-wrap"
-      onMouseEnter={activate}
-      onMouseLeave={deactivate}
-      aria-hidden="true"
-    >
+    <div className="bitcoin-model-wrap" aria-hidden="true">
       <iframe
         ref={iframeRef}
         title="Bitcoin 3D model"
