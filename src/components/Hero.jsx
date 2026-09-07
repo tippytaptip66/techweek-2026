@@ -54,7 +54,7 @@ export default function Hero() {
   const openModal = () => setIsOpen(true);
   const closeModal = () => {
     setIsOpen(false);
-    // Tween/scroll back to footer
+  
     const footer = document.querySelector("footer");
     if (footer) {
       footer.scrollIntoView({ behavior: "smooth" });
