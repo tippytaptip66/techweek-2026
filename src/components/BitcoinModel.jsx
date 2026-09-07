@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 
 const MODEL_UID = 'a06d9dcc2b5341d9aa41c97cb5fb53bb'
-const SPIN_SPEED = 0.2 
-const ZOOM = 0.45 
-                 
+const SPIN_SPEED = 0.2 // radians per second
+const ZOOM = 0.22 // <1 = camera moves closer to the model = coin looks bigger.
+                   // Lower this further (e.g. 0.15) for an even bigger coin.
 
 export default function BitcoinModel() {
   const iframeRef = useRef(null)
@@ -35,7 +35,7 @@ export default function BitcoinModel() {
         ui_fullscreen: 0,
         ui_annotations: 0,
         ui_help: 0,
-        ui_hint: 0, 
+        ui_hint: 0, // suppresses Sketchfab's "click & drag to rotate" hint icon
         scrollwheel: 0,
         success: (api) => {
           if (cancelled) return
@@ -74,7 +74,7 @@ export default function BitcoinModel() {
         if (err || !camera || cancelled) return
         const { position, target } = camera
 
-      
+        // Move the camera closer to the model (zoom in) before spinning.
         const zx = target[0] + (position[0] - target[0]) * ZOOM
         const zy = target[1] + (position[1] - target[1]) * ZOOM
         const zz = target[2] + (position[2] - target[2]) * ZOOM
