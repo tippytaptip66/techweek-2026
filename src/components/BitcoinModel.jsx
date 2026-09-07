@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
+import gsap from 'gsap'
 
-// UID taken from the sketchfab.com/3d-models/bitcoin-<uid> 
 const MODEL_UID = 'a06d9dcc2b5341d9aa41c97cb5fb53bb'
-const SPIN_SPEED = 0.2 // radians per second — slow, deliberate spin
+const SPIN_SPEED = 0.2 // radians per second
 
 export default function BitcoinModel() {
   const iframeRef = useRef(null)
   const apiRef = useRef(null)
-  const activeRef = useRef(false) 
-  const rafRef = useRef(null)
-  const [status, setStatus] = useState('loading') 
+  const tweenRef = useRef(null) // the actual running tween, so we can kill *this one*
+  const [status, setStatus] = useState('loading')
 
   useEffect(() => {
     let cancelled = false
@@ -35,23 +34,20 @@ export default function BitcoinModel() {
         ui_annotations: 0,
         ui_help: 0,
         ui_hint: 0,
-        scrollwheel: 0,
+        scrollwheel: 0, // important: without this, scrolling the page while
+                         // hovering the model zooms the camera instead
         success: (api) => {
           if (cancelled) return
           apiRef.current = api
           api.start()
           api.addEventListener('viewerready', () => {
             if (cancelled) return
-            console.info('[BitcoinModel] Sketchfab viewer ready — hover to spin.')
+            console.info('[BitcoinModel] Ready — hover to spin.')
             setStatus('ready')
-            startLoop()
           })
         },
         error: () => {
-          console.warn(
-            '[BitcoinModel] Sketchfab failed to init this model. Common causes: the ' +
-              'model UID is wrong, or the owner has disabled embedding for this model.'
-          )
+          console.warn('[BitcoinModel] Sketchfab init failed.')
           setStatus('error')
         },
       })
@@ -65,28 +61,38 @@ export default function BitcoinModel() {
         script = document.createElement('script')
         script.id = 'sketchfab-viewer-api'
         script.src = 'https://static.sketchfab.com/api/sketchfab-viewer-1.12.1.js'
-        script.onerror = () => {
-          console.warn('[BitcoinModel] Could not load the Sketchfab viewer script.')
-          setStatus('error')
-        }
+        script.onerror = () => setStatus('error')
         document.body.appendChild(script)
       }
       script.addEventListener('load', boot)
     }
 
-    let last = performance.now()
-    function startLoop() {
-      const tick = (now) => {
-        const dt = (now - last) / 1000
-        last = now
-        const api = apiRef.current
-        if (api && activeRef.current) {
-          api.getCameraLookAt((err, camera) => {
-            if (err || !camera) return
-            const { position, target } = camera
-            const dx = position[0] - target[0]
-            const dz = position[2] - target[2]
-            const angle = SPIN_SPEED * dt
+    return () => {
+      cancelled = true
+      tweenRef.current?.kill()
+    }
+  }, [])
+
+  function activate() {
+    const api = apiRef.current
+  
+    if (!api || tweenRef.current) return
+
+    api.getCameraLookAt((err, camera) => {
+      if (err || !camera) return
+      const { position, target } = camera
+      const dx = position[0] - target[0]
+      const dz = position[2] - target[2]
+
+      tweenRef.current = gsap.to(
+        { angle: 0 },
+        {
+          angle: Math.PI * 2,
+          duration: (Math.PI * 2) / SPIN_SPEED,
+          repeat: -1,
+          ease: 'none',
+          onUpdate: function () {
+            const angle = this.targets()[0].angle
             const cos = Math.cos(angle)
             const sin = Math.sin(angle)
             const newX = dx * cos - dz * sin
@@ -96,24 +102,15 @@ export default function BitcoinModel() {
               target,
               0
             )
-          })
+          },
         }
-        rafRef.current = requestAnimationFrame(tick)
-      }
-      rafRef.current = requestAnimationFrame(tick)
-    }
-
-    return () => {
-      cancelled = true
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-    }
-  }, [])
-
-  const activate = () => {
-    activeRef.current = true
+      )
+    })
   }
-  const deactivate = () => {
-    activeRef.current = false
+
+  function deactivate() {
+    tweenRef.current?.kill()
+    tweenRef.current = null
   }
 
   return (
