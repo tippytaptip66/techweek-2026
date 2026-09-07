@@ -10,6 +10,7 @@ export default function BitcoinModel() {
   const activeRef = useRef(false) 
   const rafRef = useRef(null)
   const [status, setStatus] = useState('loading') 
+
   useEffect(() => {
     let cancelled = false
 
@@ -41,7 +42,7 @@ export default function BitcoinModel() {
           api.start()
           api.addEventListener('viewerready', () => {
             if (cancelled) return
-            console.info('[BitcoinModel] Sketchfab viewer ready — hover/click-hold to spin.')
+            console.info('[BitcoinModel] Sketchfab viewer ready — hover to spin.')
             setStatus('ready')
             startLoop()
           })
@@ -120,11 +121,6 @@ export default function BitcoinModel() {
       className="bitcoin-model-wrap"
       onMouseEnter={activate}
       onMouseLeave={deactivate}
-      onMouseDown={activate}
-      onMouseUp={deactivate}
-      onTouchStart={activate}
-      onTouchEnd={deactivate}
-      onTouchCancel={deactivate}
       aria-hidden="true"
     >
       <iframe
