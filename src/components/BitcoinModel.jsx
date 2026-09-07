@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 
 const MODEL_UID = 'a06d9dcc2b5341d9aa41c97cb5fb53bb'
-const SPIN_SPEED = 0.2 // radians per second
+const SPIN_SPEED = 0.2 
+const ZOOM = 0.45 
+                 
 
 export default function BitcoinModel() {
   const iframeRef = useRef(null)
@@ -33,7 +35,7 @@ export default function BitcoinModel() {
         ui_fullscreen: 0,
         ui_annotations: 0,
         ui_help: 0,
-        ui_hint: 0, // suppresses Sketchfab's "click & drag to rotate" hint icon
+        ui_hint: 0, 
         scrollwheel: 0,
         success: (api) => {
           if (cancelled) return
@@ -71,8 +73,15 @@ export default function BitcoinModel() {
       api.getCameraLookAt((err, camera) => {
         if (err || !camera || cancelled) return
         const { position, target } = camera
-        const dx = position[0] - target[0]
-        const dz = position[2] - target[2]
+
+      
+        const zx = target[0] + (position[0] - target[0]) * ZOOM
+        const zy = target[1] + (position[1] - target[1]) * ZOOM
+        const zz = target[2] + (position[2] - target[2]) * ZOOM
+        api.setCameraLookAt([zx, zy, zz], target, 0)
+
+        const dx = zx - target[0]
+        const dz = zz - target[2]
 
         tweenRef.current = gsap.to(
           { angle: 0 },
@@ -88,7 +97,7 @@ export default function BitcoinModel() {
               const newX = dx * cos - dz * sin
               const newZ = dx * sin + dz * cos
               api.setCameraLookAt(
-                [target[0] + newX, position[1], target[2] + newZ],
+                [target[0] + newX, zy, target[2] + newZ],
                 target,
                 0
               )
@@ -112,6 +121,8 @@ export default function BitcoinModel() {
         className="bitcoin-model-iframe"
         allow="autoplay; fullscreen; xr-spatial-tracking"
       />
+      {/*  */}
+      <div className="bitcoin-model-hint-mask" />
       {status === 'error' && <div className="bitcoin-model-fallback" />}
     </div>
   )
